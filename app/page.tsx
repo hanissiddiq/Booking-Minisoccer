@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { serverSupabase } from '@/lib/supabase/server';
 import { rupiah, hhmm } from '@/lib/utils';
+import FieldPhoto from './FieldPhoto';
 export const dynamic = 'force-dynamic';
 export default async function Home() {
   const sb = await serverSupabase();
@@ -17,7 +18,8 @@ export default async function Home() {
       {!fields?.length ? <p className="text-white/60">Belum ada lapangan aktif.</p> :
       <div className="grid gap-4 sm:grid-cols-2">{fields.map((f: any) => (
         <div key={f.id} className="card space-y-2">
-          <h3 className="font-display text-2xl font-bold">{f.name}</h3>
+          <FieldPhoto src={f.photo_url} alt={f.name} className="h-44 w-full rounded-md" />
+          <h3 className="font-display text-2xl font-bold">{f.name} <span className="text-base font-medium text-white/60">{f.field_type}</span></h3>
           <p className="text-sm text-white/70">{f.description}</p>
           <p className="text-sm text-white/60">{f.location} · Buka {hhmm(f.opening_time)}–{hhmm(f.closing_time)}</p>
           <p className="text-sm text-white/60">{(f.facilities || []).join(', ')}</p>

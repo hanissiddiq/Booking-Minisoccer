@@ -27,6 +27,7 @@ export default function My() {
       return (<div key={b.id} className="card space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2"><span className="font-display text-xl font-bold">{b.booking_code}</span>
           <span className={`rounded-full px-3 py-1 text-xs font-semibold ${cls}`}>{label}</span></div>
+        <p className="text-sm text-white/70">Penyewa: {b.renter_name || '-'}</p>
         <p>{b.fields?.name} · {b.booking_date} · {hhmm(b.start_time)}–{hhmm(b.end_time)} WIB</p>
         <p className="text-sm text-white/70">{rupiah(b.total_price)} · Pembayaran: {PAY[b.payment_status]}</p>
         {st === 'pending_payment' && b.payment_status === 'unpaid' && (<div className="space-y-2 rounded-md bg-white/5 p-3 text-sm">

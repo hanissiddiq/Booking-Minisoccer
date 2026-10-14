@@ -16,7 +16,7 @@ create table public.settings (
   pending_minutes int not null default 15 check (pending_minutes > 0),
   cancel_hours_before int not null default 24,
   cash_enabled boolean not null default false,
-  bank_info text not null default 'Bank Aceh 1234567890 a.n. KickZone');
+  bank_info text not null default 'Bank BCA 1234567890 a.n. KickZone');
 insert into public.settings default values;
 
 create table public.fields (

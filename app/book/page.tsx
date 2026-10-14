@@ -3,15 +3,20 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { rupiah, todayWIB, errMsg, hhmm, endOf } from '@/lib/utils';
+import FieldPhoto from '../FieldPhoto';
 export default function Book() {
   const sb = useMemo(() => supabase(), []); const router = useRouter();
-  const [fields, setFields] = useState<any[]>([]); const [fieldId, setFieldId] = useState('');
+  const [fields, setFields] = useState<any[] | null>(null); const [fieldId, setFieldId] = useState('');
   const [date, setDate] = useState(todayWIB()); const [slots, setSlots] = useState<any[] | null>(null);
   const [start, setStart] = useState<string | null>(null); const [hours, setHours] = useState(1);
   const [price, setPrice] = useState<number | null>(null); const [notes, setNotes] = useState('');
-  const [msg, setMsg] = useState<string | null>(null); const [busy, setBusy] = useState(false);
-  useEffect(() => { sb.from('fields').select('*').eq('status', 'active').order('name').then(({ data }) => {
-    setFields(data || []); setFieldId(new URLSearchParams(location.search).get('field') || data?.[0]?.id || ''); }); }, [sb]);
+  const [renter, setRenter] = useState(''); const [msg, setMsg] = useState<string | null>(null); const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    sb.from('fields').select('*').eq('status', 'active').order('created_at').then(({ data }) => {
+      setFields(data || []); setFieldId(new URLSearchParams(location.search).get('field') || data?.[0]?.id || ''); });
+    sb.auth.getUser().then(async ({ data: { user } }) => { if (!user) return;
+      const { data: p } = await sb.from('profiles').select('full_name').eq('id', user.id).single(); setRenter(r => r || p?.full_name || ''); });
+  }, [sb]);
   const load = async () => {
     if (!fieldId) return; setSlots(null);
     const { data, error } = await sb.rpc('get_availability', { p_field_id: fieldId, p_date: date });
@@ -28,38 +33,46 @@ export default function Book() {
     const { data: { user } } = await sb.auth.getUser();
     if (!user) return router.push('/login?next=/book');
     setBusy(true); setMsg(null);
-    const { error } = await sb.rpc('create_booking', { p_field_id: fieldId, p_date: date, p_start: start, p_hours: hours, p_notes: notes || null });
+    const { error } = await sb.rpc('create_booking', { p_field_id: fieldId, p_date: date, p_start: start, p_hours: hours, p_renter_name: renter, p_notes: notes || null });
     setBusy(false);
     if (error) { setMsg(errMsg(error.message)); setStart(null); load(); return; }
     router.push('/my');
   };
-  const field = fields.find(f => f.id === fieldId);
-  return (<div className="grid gap-6 md:grid-cols-[1fr_320px]">
-    <section className="space-y-4">
-      <h1 className="font-display text-4xl font-bold">Jadwal & booking</h1>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="space-y-1 text-sm">Lapangan<select className="input" value={fieldId} onChange={e => setFieldId(e.target.value)}>
-          {fields.map(f => <option key={f.id} value={f.id} className="text-black">{f.name}</option>)}</select></label>
-        <label className="space-y-1 text-sm">Tanggal<input className="input" type="date" min={todayWIB()} value={date} onChange={e => e.target.value && setDate(e.target.value)} /></label>
-      </div>
-      {field && <p className="text-sm text-white/60">Buka {hhmm(field.opening_time)}–{hhmm(field.closing_time)} WIB · mulai {rupiah(field.price_per_hour)}/jam</p>}
-      {slots === null ? <p className="text-white/60">Memuat slot…</p> : !slots.length ? <p className="text-white/60">Tidak ada slot pada lapangan ini.</p> :
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">{slots.map(s => {
-        const sel = s.slot_start === start;
-        return <button key={s.slot_start} disabled={!s.available} onClick={() => { setStart(s.slot_start); setHours(1); }}
-          className={`rounded-md border px-2 py-3 text-sm font-semibold transition ${!s.available ? 'cursor-not-allowed border-red-500/30 bg-red-500/10 text-red-300/60 line-through' :
-            sel ? 'border-lime bg-lime text-black' : 'border-lime/50 bg-lime/10 text-lime hover:bg-lime/20'}`}>{hhmm(s.slot_start)}</button>; })}</div>}
-      <p className="text-xs text-white/50"><span className="text-lime">Hijau</span> tersedia · <span className="text-red-300">Merah</span> terisi, ditutup, atau sudah lewat</p>
+  const field = fields?.find(f => f.id === fieldId);
+  return (<div className="space-y-6">
+    <h1 className="font-display text-4xl font-bold">Jadwal & booking</h1>
+    <section className="space-y-2"><h2 className="text-sm text-white/70">1. Pilih lapangan</h2>
+      {fields === null ? <p className="text-white/60">Memuat lapangan…</p> : !fields.length ? <p className="text-white/60">Belum ada lapangan aktif.</p> :
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">{fields.map(f => (
+        <button key={f.id} onClick={() => setFieldId(f.id)} aria-pressed={f.id === fieldId}
+          className={`overflow-hidden rounded-lg border text-left transition ${f.id === fieldId ? 'border-lime ring-2 ring-lime/60' : 'border-white/15 hover:border-white/40'}`}>
+          <FieldPhoto src={f.photo_url} alt={f.name} className="h-32 w-full" />
+          <div className="space-y-0.5 p-3"><p className="font-display text-xl font-bold leading-tight">{f.name}</p>
+            <p className="text-xs text-white/60">{f.field_type} · {hhmm(f.opening_time)}–{hhmm(f.closing_time)}</p>
+            <p className="text-sm font-semibold text-lime">{rupiah(f.price_per_hour)}/jam</p></div></button>))}</div>}
     </section>
-    <aside className="card h-fit space-y-3">
-      <h2 className="font-display text-2xl font-bold">Ringkasan</h2>
-      {!start ? <p className="text-sm text-white/60">Pilih jam mulai untuk melihat ringkasan.</p> : <>
-        <p>{field?.name}<br /><span className="text-white/70">{date} · {hhmm(start)}–{endOf(start, hours)} WIB</span></p>
-        <label className="block space-y-1 text-sm">Durasi<select className="input" value={hours} onChange={e => setHours(+e.target.value)}>
-          {Array.from({ length: maxHours }, (_, i) => i + 1).map(h => <option key={h} value={h} className="text-black">{h} jam</option>)}</select></label>
-        <textarea className="input" rows={2} placeholder="Catatan (opsional)" value={notes} onChange={e => setNotes(e.target.value)} />
-        <p className="text-2xl font-bold text-lime">{price === null ? '…' : rupiah(price)}</p>
-        <button className="btn w-full" disabled={busy || price === null} onClick={submit}>{busy ? 'Memproses…' : 'Pesan sekarang'}</button></>}
-      {msg && <p className="text-sm text-red-300">{msg}</p>}
-    </aside></div>);
+    <div className="grid gap-6 md:grid-cols-[1fr_320px]">
+      <section className="space-y-4">
+        <label className="block max-w-xs space-y-1 text-sm">2. Pilih tanggal<input className="input" type="date" min={todayWIB()} value={date} onChange={e => e.target.value && setDate(e.target.value)} /></label>
+        {field && <p className="text-sm text-white/60">{field.name} · buka {hhmm(field.opening_time)}–{hhmm(field.closing_time)} WIB</p>}
+        {slots === null ? <p className="text-white/60">Memuat slot…</p> : !slots.length ? <p className="text-white/60">Tidak ada slot pada lapangan ini.</p> :
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">{slots.map(s => {
+          const sel = s.slot_start === start;
+          return <button key={s.slot_start} disabled={!s.available} onClick={() => { setStart(s.slot_start); setHours(1); }}
+            className={`rounded-md border px-2 py-3 text-sm font-semibold transition ${!s.available ? 'cursor-not-allowed border-red-500/30 bg-red-500/10 text-red-300/60 line-through' :
+              sel ? 'border-lime bg-lime text-black' : 'border-lime/50 bg-lime/10 text-lime hover:bg-lime/20'}`}>{hhmm(s.slot_start)}</button>; })}</div>}
+        <p className="text-xs text-white/50"><span className="text-lime">Hijau</span> tersedia · <span className="text-red-300">Merah</span> terisi, ditutup, atau sudah lewat</p>
+      </section>
+      <aside className="card h-fit space-y-3">
+        <h2 className="font-display text-2xl font-bold">Ringkasan</h2>
+        {!start ? <p className="text-sm text-white/60">Pilih jam mulai untuk melihat ringkasan.</p> : <>
+          <p>{field?.name}<br /><span className="text-white/70">{date} · {hhmm(start)}–{endOf(start, hours)} WIB</span></p>
+          <label className="block space-y-1 text-sm">Durasi<select className="input" value={hours} onChange={e => setHours(+e.target.value)}>
+            {Array.from({ length: maxHours }, (_, i) => i + 1).map(h => <option key={h} value={h} className="text-black">{h} jam</option>)}</select></label>
+          <label className="block space-y-1 text-sm">Nama penyewa<input className="input" maxLength={100} placeholder="Nama penyewa / tim" value={renter} onChange={e => setRenter(e.target.value)} /></label>
+          <textarea className="input" rows={2} placeholder="Catatan (opsional)" value={notes} onChange={e => setNotes(e.target.value)} />
+          <p className="text-2xl font-bold text-lime">{price === null ? '…' : rupiah(price)}</p>
+          <button className="btn w-full" disabled={busy || price === null || renter.trim().length < 2} onClick={submit}>{busy ? 'Memproses…' : 'Pesan sekarang'}</button></>}
+        {msg && <p className="text-sm text-red-300">{msg}</p>}
+      </aside></div></div>);
 }

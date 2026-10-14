@@ -1,4 +1,4 @@
-// File: C:\laragon\www\kickzone\app\page.tsx
+// File: C:\laragon\www\Booking-Minisoccer\app\page.tsx
 import * as entry from '../../../app/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

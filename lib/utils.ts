@@ -7,6 +7,7 @@ const M: Record<string, string> = {
   SLOT_BLOCKED: 'Jadwal ini ditutup oleh pengelola. Silakan pilih jadwal lain.',
   PAST_TIME: 'Jadwal yang dipilih sudah lewat.', OUTSIDE_HOURS: 'Jadwal di luar jam operasional.',
   UNAUTHENTICATED: 'Silakan login terlebih dahulu.', ACCOUNT_DISABLED: 'Akun Anda dinonaktifkan.',
+  INVALID_RENTER: 'Nama penyewa wajib diisi (minimal 2 karakter).',
   INVALID_INPUT: 'Data tidak valid.', FIELD_UNAVAILABLE: 'Lapangan tidak tersedia.',
   BOOKING_EXPIRED: 'Booking sudah kedaluwarsa. Silakan buat booking baru.',
   NOT_CANCELLABLE: 'Booking ini tidak dapat dibatalkan.',

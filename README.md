@@ -4,6 +4,7 @@ Next.js 15 + TypeScript + Tailwind + Supabase (Postgres, Auth, RLS, Storage).
 ## Instalasi
 1. Buat project di supabase.com. (Opsional: Authentication > Providers > Email > matikan "Confirm email" untuk uji coba.)
 2. Database > Extensions: aktifkan `pg_cron`. Lalu SQL Editor: jalankan seluruh `supabase/migrations/001_init.sql`.
+2b. Jalankan juga `supabase/migrations/002_fields_renter.sql` (jenis lapangan, foto, nama penyewa).
 3. `cp .env.example .env.local`, isi URL dan anon key (Project Settings > API). Service role key tidak dipakai.
 4. `npm install && npm run dev` lalu buka http://localhost:3000
 5. Daftar akun lewat /register, lalu jadikan admin di SQL Editor:
