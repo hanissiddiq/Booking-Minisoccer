@@ -29,7 +29,7 @@ export default function Admin() {
   if (ok === null) return <p className="text-white/60">Memuat…</p>;
   if (!ok) return <p className="text-red-300">Halaman ini hanya untuk admin.</p>;
   const S = ({ l, v }: any) => <div className="card"><p className="text-sm text-white/60">{l}</p><p className="font-display text-3xl font-bold text-lime">{v}</p></div>;
-  return (<div className="space-y-6"><div className="flex items-center justify-between"><h1 className="font-display text-4xl font-bold">Dashboard admin</h1><Link href="/admin/fields" className="btn">Kelola lapangan</Link></div>
+  return (<div className="space-y-6"><div className="flex items-center justify-between"><h1 className="font-display text-4xl font-bold">Dashboard admin</h1><div className="flex gap-2"><Link href="/admin/payment-accounts" className="btn-ghost">Tujuan transfer</Link><Link href="/admin/fields" className="btn">Kelola lapangan</Link></div></div>
     <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
       <S l="Booking hari ini" v={stats.today} /><S l="Pendapatan hari ini" v={rupiah(stats.revDay)} /><S l="Pendapatan 7 hari" v={rupiah(stats.revWeek)} />
       <S l="Pendapatan bulan ini" v={rupiah(stats.revMonth)} /><S l="Menunggu pembayaran" v={stats.pending} /><S l="Terkonfirmasi" v={stats.confirmed} /></div>
@@ -42,6 +42,7 @@ export default function Admin() {
         <div className="flex flex-wrap items-center justify-between gap-2"><b>{b.booking_code}</b><span className={`rounded-full px-3 py-1 text-xs font-semibold ${cls}`}>{label}</span></div>
         <p className="text-sm">Penyewa: <b>{b.renter_name || '-'}</b> (akun: {b.profiles?.full_name}, {b.profiles?.phone}) · {b.fields?.name} · {b.booking_date} {hhmm(b.start_time)}–{hhmm(b.end_time)} · {rupiah(b.total_price)} · {PAY[b.payment_status]}</p>
         <div className="flex flex-wrap gap-2">
+          {pay?.account_snapshot && <p className="w-full text-xs text-white/60">Tujuan transfer: {pay.account_snapshot}</p>}
           {pay?.proof_url && <button className="btn-ghost" onClick={() => proof(pay.proof_url)}>Lihat bukti</button>}
           {b.payment_status === 'pending_verification' && st === 'pending_payment' && <>
             <button className="btn" onClick={() => act('admin_verify_payment', { p_booking_id: b.id, p_approve: true })}>Verifikasi lunas</button>
